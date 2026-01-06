@@ -4,7 +4,7 @@ Description: Manages vector indexing using Pathway's LLM XPack.
 """
 
 import pathway as pw
-# from pathway.xpacks import llm  # Uncomment when ready
+from pathway.xpacks import llm
 
 class HybridIndexer:
     """
@@ -30,6 +30,10 @@ class HybridIndexer:
         Returns:
             pw.Table: An indexed table ready for ANN search.
         """
-        # TODO: Use pathway.xpacks.llm.vector_store or similar mechanism
-        # return pw.xpacks.llm.vector_store(table, ...)
-        pass
+        # Create a vector store using Pathway's LLM XPack
+        # This automatically handles splitting, embedding, and indexing
+        return llm.vector_store(
+            table,
+            embedder=self.embedder_config,
+            # We can rely on default splitter or customize if needed
+        )

@@ -27,10 +27,28 @@ class DataIngestor:
 
         Returns:
             pw.Table: A Pathway table representing the ingested book content.
+                      Columns: [data, modified_at, path, text]
         """
-        # TODO: Implement Pathway text ingestion (p.io.fs.read)
-        # return pw.io.fs.read(..., mode=("streaming" if self.watch_mode else "static"))
-        pass
+        # Read files from the data directory
+        # mode="streaming" allows real-time updates when new files are added
+        files = pw.io.fs.read(
+            self.data_dir,
+            format="plaintext",
+            mode="streaming" if self.watch_mode else "static",
+            with_metadata=True,
+        )
+
+        # Decode binary data to text (assuming UTF-8)
+        # We handle potential decoding errors gracefully or just assume clean input for now
+        documents = files.select(
+            text=pw.this.data,
+            path=pw.this.path,
+            modified_at=pw.this.modified_at
+        )
+        
+        # Filter out non-text files if necessary, or just keep all
+        # For now, we return everything that was successfully decoded
+        return documents
 
     def ingest_test_csv(self, csv_path: str) -> pw.Table:
         """
@@ -42,5 +60,13 @@ class DataIngestor:
         Returns:
             pw.Table: A Pathway table representing the CSV data.
         """
-        # TODO: Implement Pathway CSV ingestion
-        pass
+        # Read CSV file
+        # Default mode is streaming, but for a potentially static CSV, 'static' might be safer
+        # unless we expect the CSV to grow. The existing code passes watch_mode to constructor.
+        # Let's assume the CSV might update or just use the same mode policy.
+        
+        return pw.io.csv.read(
+            csv_path,
+            mode="streaming" if self.watch_mode else "static",
+            schema=None  # Infer schema automatically
+        )
