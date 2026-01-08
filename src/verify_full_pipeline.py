@@ -13,7 +13,7 @@ load_dotenv()
 def verify_full():
     print("Starting full pipeline verification...")
     DATA_DIR = "./data/"
-    TEST_CSV = "./data/test.csv"
+    TEST_CSV = "./data/test_mini.csv"
 
     # 1. Ingestion
     ingestor = DataIngestor(DATA_DIR, watch_mode=False) 

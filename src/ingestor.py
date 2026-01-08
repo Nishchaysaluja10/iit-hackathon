@@ -38,10 +38,21 @@ class DataIngestor:
             with_metadata=True,
         )
 
+        @pw.udf
+        def get_path_udf(meta: dict) -> str:
+            return meta.get("path", "unknown")
+            
+        @pw.udf
+        def get_time_udf(meta: dict) -> int:
+            val = meta.get("modified_at", 0)
+            return int(val) if val else 0
+
         # Decode binary data to text (assuming UTF-8)
         # We handle potential decoding errors gracefully or just assume clean input for now
         documents = files.select(
-            data=pw.this.data
+            data=pw.this.data,
+            path=get_path_udf(pw.this._metadata),
+            modified_at=get_time_udf(pw.this._metadata)
         )
         
         # Filter out non-text files if necessary, or just keep all

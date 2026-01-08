@@ -1,0 +1,4 @@
+The quick brown fox jumps over the lazy dog.
+This is a sample story for testing Pathway ingestion.
+Chapter 1: The Beginning.
+Once upon a time in a digital land...
