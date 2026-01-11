@@ -81,26 +81,56 @@ class NarrativeAuditor:
         @pw.udf
         async def verify_claim(claim: str, context: list[dict]) -> dict:
             import asyncio
-            await asyncio.sleep(15)
-            prompt = f"Claim: {claim}\\nContext: {context}\\nIs this claim consistent with the context? Return JSON {{'consistent': bool, 'reason': str}}"
-            # Simplified LLM call
-            from litellm import acompletion
             import json
-            try:
-                resp = await acompletion(
-                    model=self.llm_config.get("model", "gemini/gemini-flash-latest"),
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "json_object"},
-                    api_key=self.llm_config.get("api_key")
-                )
-                return json.loads(resp.choices[0].message.content)
-            except Exception:
-                return {"consistent": False, "reason": "Error during verification"}
+            import random
+            from litellm import acompletion
 
-        results = enriched_claims.select(
+            delay = 20  # Start with 20s
+            max_retries = 10
+            
+            prompt = f"Claim: {claim}\nContext: {context}\nIs this claim consistent with the context? Return JSON {{'consistent': bool, 'reason': str}}"
+
+            for attempt in range(max_retries):
+                try:
+                    # Random jitter to prevent thundering herd
+                    sleep_time = delay + random.uniform(0, 10)
+                    await asyncio.sleep(sleep_time)
+                    
+                    resp = await acompletion(
+                        model=self.llm_config.get("model", "gemini/gemini-flash-latest"),
+                        messages=[{"role": "user", "content": prompt}],
+                        response_format={"type": "json_object"},
+                        api_key=self.llm_config.get("api_key"),
+                        caching=False
+                    )
+                    return json.loads(resp.choices[0].message.content)
+                except Exception as e:
+                    # Check for Rate Limit errors generic signatures
+                    err_str = str(e).lower()
+                    if "429" in err_str or "resource exhausted" in err_str or "quota" in err_str:
+                        print(f"RATE LIMIT (Attempt {attempt+1}/{max_retries}) for '{claim[:10]}...'. Sleeping {delay}s...")
+                        delay = min(delay * 2, 120) # Exponential backoff cap at 120s
+                    else:
+                        print(f"VERIFICATION ERROR for claim '{claim}': {e}")
+                        return {"consistent": False, "reason": f"Error during verification: {e}"}
+            
+            return {"consistent": False, "reason": "Max retries exceeded"}
+
+        # Flatten the results for clearer CSV output
+        # verification result is a dict, we extract fields
+        # Note: In Pathway, we can use simple select with item access if type is handled
+        
+        annotated_results = enriched_claims.select(
             claim=claims_table.claim,
             context=pw.this.result,
             verification=verify_claim(claims_table.claim, pw.this.result)
         )
+
+        final_results = annotated_results.select(
+            pw.this.claim,
+            pw.this.context,
+            is_consistent=pw.this.verification["consistent"],
+            reason=pw.this.verification["reason"]
+        )
         
-        return results
+        return final_results

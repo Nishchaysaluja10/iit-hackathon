@@ -25,11 +25,29 @@ def main():
     """
     # 1. Configuration
     DATA_DIR = "./data/mini/"
-    TEST_CSV = "./data/test_mini.csv"
+    TEST_CSV = "./data/external/Dataset/train.csv"
 
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reindex", action="store_true", help="Clear existing index before ingestion")
+    args = parser.parse_args()
+    if args.reindex:
+        import shutil, os
+        index_dir = os.path.join(os.getcwd(), "data", "index")
+        if os.path.isdir(index_dir):
+            shutil.rmtree(index_dir)
+            print(f"Removed existing index directory: {index_dir}")
+        else:
+            print("No existing index directory to remove.")
+    
     # 2. Ingestion
     ingestor = DataIngestor(DATA_DIR)
     books_table = ingestor.ingest_books()
+    external_ingestor = DataIngestor("./data/external/Dataset/Books")
+    external_table = external_ingestor.ingest_books()
+    # Ensure universes are disjoint before concatenation
+    books_table = books_table.promise_universes_are_disjoint(external_table)
+    combined_table = books_table.concat(external_table)
     
     # 3. Indexing
     # ingestor.ingest_books()
@@ -40,7 +58,7 @@ def main():
         "model": "gemini/text-embedding-004", 
         "api_key": api_key
     }) 
-    index = indexer.build_index(books_table)
+    index = indexer.build_index(combined_table)
     
     # 4. Processing Pipeline
     # A. Ingest Backstories

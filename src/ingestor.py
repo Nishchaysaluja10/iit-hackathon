@@ -60,10 +60,12 @@ class DataIngestor:
         # Let's assume the CSV might update or just use the same mode policy.
         
         class BackstorySchema(pw.Schema):
-            backstory: str
+            content: str
 
-        return pw.io.csv.read(
+        table = pw.io.csv.read(
             csv_path,
             mode="streaming" if self.watch_mode else "static",
             schema=BackstorySchema
         )
+        # Rename content to backstory to match main.py expectation across files
+        return table.select(backstory=pw.this.content)
