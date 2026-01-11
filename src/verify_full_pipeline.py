@@ -60,7 +60,7 @@ def verify_full():
     
     # 5. Output
     print("Computing results and writing to CSV...")
-    pw.io.csv.write(audit_results, "audit_results.csv")
+    pw.io.csv.write(audit_results, "results/audit_results.csv")
     pw.run()
 
 if __name__ == "__main__":

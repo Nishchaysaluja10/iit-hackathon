@@ -12,7 +12,7 @@ def compute_metrics():
     # Load Expectation
     try:
         gold_df = pd.read_csv("data/gold_standard.csv")
-        results_df = pd.read_csv("evaluation_results.csv")
+        results_df = pd.read_csv("results/evaluation_results.csv")
     except FileNotFoundError:
         print("Waiting for files...")
         return

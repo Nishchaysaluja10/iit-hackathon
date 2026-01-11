@@ -95,7 +95,7 @@ def main():
     
     # 5. Output
     # Write results to CSV
-    pw.io.csv.write(audit_results, "audit_results.csv")
+    pw.io.csv.write(audit_results, "results/audit_results.csv")
     
     print("Pipeline defined. Starting Pathway...")
     pw.run()

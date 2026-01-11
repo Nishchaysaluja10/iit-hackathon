@@ -40,9 +40,9 @@ def main():
     results = auditor.audit_backstory(gold_table)
     
     # 5. Save Results
-    pw.io.csv.write(results, "evaluation_results.csv")
+    pw.io.csv.write(results, "results/evaluation_results.csv")
     
-    print("Evaluation pipeline started. Results will be in 'evaluation_results.csv'.")
+    print("Evaluation pipeline started. Results will be in 'results/evaluation_results.csv'.")
     pw.run()
 
 if __name__ == "__main__":
